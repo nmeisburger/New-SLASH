@@ -29,7 +29,7 @@ int main() {
 
   uint64_t N = 1000, Q = 1000;
 
-  std::string file = "../data/webspam_wc_normalized_trigram.svm";
+  std::string file = "/Users/nmeisburger/files/Research/data/webspam_wc_normalized_trigram.svm";
 
   LOG << "Creating hash table and hash function" << std::endl;
   HashTable<uint32_t, uint32_t> ht(L, R, RP);

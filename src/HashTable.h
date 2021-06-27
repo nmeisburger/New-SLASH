@@ -2,7 +2,7 @@
 
 #include <atomic>
 
-constexpr uint64_t MaxRand = 10000;
+constexpr uint64_t DefaultMaxRand = 10000;
 
 template <typename Label_t>
 class QueryResult {
@@ -56,11 +56,16 @@ class HashTable {
   constexpr Hash_t HashMod(Hash_t hash) { return hash & mask; }
 
  public:
-  HashTable(uint64_t _numTables, uint64_t _reservoirSize, uint64_t _rangePow, uint64_t _maxRand);
+  HashTable(uint64_t _numTables, uint64_t _reservoirSize, uint64_t _rangePow,
+            uint64_t _maxRand = DefaultMaxRand);
 
   void Insert(uint64_t n, Label_t* labels, Hash_t* hashes);
 
+  void Insert(uint64_t n, Label_t start, Hash_t* hashes);
+
   QueryResult<Label_t> Query(uint64_t n, Hash_t* hashes, uint64_t k);
+
+  void Dump();
 
   ~HashTable();
 };

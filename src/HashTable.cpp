@@ -1,6 +1,7 @@
 #include "HashTable.h"
 
 #include <algorithm>
+#include <iostream>
 #include <unordered_map>
 
 template class HashTable<uint32_t, uint32_t>;
@@ -19,7 +20,7 @@ HashTable<Label_t, Hash_t>::HashTable(uint64_t _numTables, uint64_t _reservoirSi
   mask = range - 1;
 
   for (uint64_t i = 1; i < maxRand; i++) {
-    genRand[i] = ((uint32_t)rand()) % i;
+    genRand[i] = ((uint32_t)rand()) % (i + 1);
   }
 
   counters = new std::atomic<uint32_t>[numTables * range]();
@@ -38,6 +39,25 @@ void HashTable<Label_t, Hash_t>::Insert(uint64_t n, Label_t* labels, Hash_t* has
         counter = genRand[counter % maxRand];
         if (counter < reservoirSize) {
           data[DataIdx(table, rowIndex, counter)] = labels[i];
+        }
+      }
+    }
+  }
+}
+
+template <typename Label_t, typename Hash_t>
+void HashTable<Label_t, Hash_t>::Insert(uint64_t n, Label_t start, Hash_t* hashes) {
+  for (uint64_t i = 0; i < n; i++) {
+    for (uint64_t table = 0; table < numTables; table++) {
+      Hash_t rowIndex = HashMod(hashes[HashIdx(i, table)]);
+      uint32_t counter = counters[CounterIdx(table, rowIndex)]++;
+
+      if (counter < reservoirSize) {
+        data[DataIdx(table, rowIndex, counter)] = start + i;
+      } else {
+        counter = genRand[counter % maxRand];
+        if (counter < reservoirSize) {
+          data[DataIdx(table, rowIndex, counter)] = start + i;
         }
       }
     }
@@ -77,6 +97,22 @@ QueryResult<Label_t> HashTable<Label_t, Hash_t>::Query(uint64_t n, Hash_t* hashe
   }
 
   return result;
+}
+
+template <typename Label_t, typename Hash_t>
+void HashTable<Label_t, Hash_t>::Dump() {
+  for (uint64_t table = 0; table < numTables; table++) {
+    std::cout << "Table: " << table << std::endl;
+    for (uint64_t row = 0; row < range; row++) {
+      uint32_t cnt = counters[CounterIdx(table, row)];
+      std::cout << "[ " << row << " :: " << cnt << " ]";
+      for (uint64_t i = 0; i < std::min<uint64_t>(cnt, reservoirSize); i++) {
+        std::cout << "\t" << data[DataIdx(table, row, i)];
+      }
+      std::cout << std::endl;
+    }
+    std::cout << std::endl;
+  }
 }
 
 template <typename Label_t, typename Hash_t>

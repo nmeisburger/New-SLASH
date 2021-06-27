@@ -6,7 +6,7 @@ std::ofstream* distributedLogFile = nullptr;
 
 void InitLogging(std::string prefix) {
   int rank = 0;
-  // MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   prefix.append(std::to_string(rank));
   prefix.append(".log");

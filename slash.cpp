@@ -1,24 +1,62 @@
+#include <mpi.h>
+
 #include <iostream>
 #include <random>
 
+#include "src/DOPH.h"
 #include "src/DataLoader.h"
 #include "src/DistributedLog.h"
 #include "src/HashTable.h"
 
+class InitHelper {
+ public:
+  InitHelper() {
+    MPI_Init(0, 0);
+    Logging::InitLogging("slash");
+    LOG << "Initializing SLASH" << std::endl;
+  }
+  ~InitHelper() {
+    LOG << "Finished, starting cleanup" << std::endl;
+    MPI_Finalize();
+    Logging::StopLogging();
+  }
+};
+
 int main() {
-  Logging::InitLogging("slash");
+  InitHelper _i_;
 
-  LOG << "Does it work" << std::endl;
+  uint64_t K = 4, L = 128, RP = 10, R = 128;
 
-  HashTable<uint32_t, uint32_t> x(10, 10, 10);
+  uint64_t N = 1000, Q = 1000;
 
-  Logging::StopLogging();
+  std::string file = "../data/webspam_wc_normalized_trigram.svm";
+
+  LOG << "Creating hash table and hash function" << std::endl;
+  HashTable<uint32_t, uint32_t> ht(L, R, RP);
+  DOPH<uint32_t, uint32_t> hf(K, L, RP);
+
+  LOG << "Reading data" << std::endl;
+  SvmDataset<uint32_t> data = SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, N, 5000, Q);
+  SvmDataset<uint32_t> queries =
+      SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, Q, 5000, 0);
+
+  LOG << "Inserting data" << std::endl;
+  auto hashes = hf.Hash(data);
+  ht.Insert(data.len, data.start, hashes);
+
+  LOG << "Querying" << std::endl;
+  auto qHashes = hf.Hash(queries);
+  auto results = ht.Query(queries.len, qHashes, 10);
+
+  LOG << "Evaluating" << std::endl;
+  Eval<uint32_t>(data, queries, results, 10);
 
   return 0;
 }
 
-template <typename T>
-void Eval(SvmDataset<T>& data, SvmDataset<T>& queries, QueryResult<T>& results, uint64_t K) {
+template <typename Label_t>
+void Eval(SvmDataset<Label_t>& data, SvmDataset<Label_t>& queries, QueryResult<Label_t>& results,
+          uint64_t K) {
   double totalSim;
   uint64_t cnt;
   for (uint64_t query = 0; query < queries.len; query++) {

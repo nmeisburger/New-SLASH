@@ -65,7 +65,7 @@ Hash_t* DOPH<Label_t, Hash_t>::ComputeMinHashes(uint32_t* nonzeros, uint32_t len
     h ^= h >> 13;
     h *= 0x85ebca6b;
     Hash_t curhash = ((h * nonzeros[i]) << 5) >> (32 - rangePow);
-    uint32_t binid = std::min<uint64_t>(std::floor(curhash / binsize), numHashes - 1);
+    uint32_t binid = std::min<uint64_t>(curhash / binsize, numHashes - 1);
     if (curhash < hashes[binid]) {
       hashes[binid] = curhash;
     }

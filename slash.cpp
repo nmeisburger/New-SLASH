@@ -72,9 +72,9 @@ void Eval(SvmDataset<Label_t>& data, SvmDataset<Label_t>& queries, QueryResult<L
 int main() {
   InitHelper _i_;
 
-  uint64_t K = 4, L = 128, RP = 10, R = 128;
+  uint64_t K = 4, L = 32, RP = 8, R = 128;
 
-  uint64_t N = 1000, Q = 1000;
+  uint64_t N = 10000, Q = 1000;
 
   std::string file = "/Users/nmeisburger/files/Research/data/webspam_wc_normalized_trigram.svm";
 
@@ -93,10 +93,10 @@ int main() {
 
   LOG << "Querying" << std::endl;
   auto qHashes = hf.Hash(queries);
-  auto results = ht.Query(queries.len, qHashes, 10);
+  auto results = ht.Query(queries.len, qHashes, 4);
 
   LOG << "Evaluating" << std::endl;
-  Eval<uint32_t>(data, queries, results, 10);
+  Eval<uint32_t>(data, queries, results, 4);
 
   return 0;
 }

@@ -1,8 +1,11 @@
 #include "HashTable.h"
 
+#include <assert.h>
+
 #include <algorithm>
 #include <iostream>
 #include <unordered_map>
+#include <vector>
 
 template class HashTable<uint32_t, uint32_t>;
 
@@ -78,15 +81,13 @@ QueryResult<Label_t> HashTable<Label_t, Hash_t>::Query(uint64_t n, Hash_t* hashe
       }
     }
 
-    std::pair<Label_t, uint32_t>* pairs = new std::pair<Label_t, uint32_t>[contents.size()];
-
+    std::pair<Label_t, uint32_t>* pairs = new std::pair<Label_t, uint32_t>[contents.size()]();
     uint64_t cnt = 0;
     for (const auto& x : contents) {
       pairs[cnt++] = x;  // std::move(x)?
     }
 
-    std::sort(pairs, pairs + cnt,
-              [](const auto& a, const auto& b) { return a.second >= b.second; });
+    std::sort(pairs, pairs + cnt, [](const auto& a, const auto& b) { return a.second > b.second; });
 
     uint64_t len = std::min(k, cnt);
     result.len(query) = len;

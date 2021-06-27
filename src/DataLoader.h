@@ -47,6 +47,9 @@ class SvmDataset {
                 << std::endl;
       exit(1);
     }
+
+    std::cout << "Read " << totalRead << " vectors with a total dimension " << totalDim
+              << std::endl;
     result.markers[totalRead] = totalDim;
   }
 

@@ -7,7 +7,7 @@
 template <typename Label_t, typename Hash_t>
 class DOPH {
  private:
-  uint64_t numHashes, logNumHashes, K, L, rangePow, range, binsize;
+  uint64_t K, L, numHashes, logNumHashes, rangePow, range, binsize;
 
   uint32_t* randSeeds;
   uint32_t seed, dhSeed;

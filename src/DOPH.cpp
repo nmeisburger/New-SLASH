@@ -1,11 +1,14 @@
 #include "DOPH.h"
 
-#define NULL_HASH -1
+#define NULL_HASH ((uint32_t)-1)
+
 constexpr uint32_t ODD(uint32_t x) { return x << 31 ? x : x + 1; }
+
+template class DOPH<uint32_t, uint32_t>;
 
 template <typename Label_t, typename Hash_t>
 DOPH<Label_t, Hash_t>::DOPH(uint64_t _K, uint64_t _L, uint64_t _rangePow)
-    : K(K), L(L), numHashes(K * L), rangePow(_rangePow), range(1 << rangePow) {
+    : K(_K), L(_L), numHashes(_K * _L), rangePow(_rangePow), range(1 << rangePow) {
   binsize = std::ceil(range / numHashes);
 
   logNumHashes = std::floor(log2(numHashes));

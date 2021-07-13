@@ -22,6 +22,7 @@ HashTable<Label_t, Hash_t>::HashTable(uint64_t _numTables, uint64_t _reservoirSi
 
   mask = range - 1;
 
+  srand(32);
   for (uint64_t i = 1; i < maxRand; i++) {
     genRand[i] = ((uint32_t)rand()) % (i + 1);
   }
@@ -76,7 +77,7 @@ QueryResult<Label_t> HashTable<Label_t, Hash_t>::Query(uint64_t n, Hash_t* hashe
       Hash_t rowIndex = HashMod(hashes[HashIdx(query, table)]);
       uint32_t counter = counters[CounterIdx(table, rowIndex)];
 
-      for (uint64_t i = 0; i < counter; i++) {
+      for (uint64_t i = 0; i < std::min<uint64_t>(counter, reservoirSize); i++) {
         contents[data[DataIdx(table, rowIndex, i)]]++;
       }
     }

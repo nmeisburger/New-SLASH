@@ -53,6 +53,8 @@ void Eval(SvmDataset<Label_t>& data, SvmDataset<Label_t>& queries, QueryResult<L
   double totalSim = 0;
   uint64_t cnt = 0;
   for (uint64_t query = 0; query < queries.len; query++) {
+    double tmpSim = 0;
+    uint64_t tmpCnt = 0;
     for (uint64_t x = 0; x < std::min(K, results.len(query)); x++) {
       auto result = results[query][x];
       double innerProduct =
@@ -61,20 +63,22 @@ void Eval(SvmDataset<Label_t>& data, SvmDataset<Label_t>& queries, QueryResult<L
       double queryMagnitude = Magnitude(queries.Values(query), queries.Len(query));
       double dataMagnitude = Magnitude(data.Values(result), data.Len(result));
 
-      totalSim += innerProduct / (queryMagnitude * dataMagnitude);
-      cnt++;
+      tmpSim += innerProduct / (queryMagnitude * dataMagnitude);
+      tmpCnt++;
     }
+    totalSim += tmpSim / tmpCnt;
+    cnt++;
   }
 
-  std::cout << "Average Cosine Similarity @" << K << " = " << totalSim / cnt << std::endl;
+  LOG << "Average Cosine Similarity @" << K << " = " << totalSim / cnt << std::endl;
 }
 
 int main() {
   InitHelper _i_;
 
-  uint64_t K = 4, L = 32, RP = 8, R = 128;
+  uint64_t K = 4, L = 32, RP = 9, R = 128;
 
-  uint64_t N = 10000, Q = 1000;
+  uint64_t N = 10000, Q = 1000, topk = 20;
 
   std::string file = "/Users/nmeisburger/files/Research/data/webspam_wc_normalized_trigram.svm";
 
@@ -83,9 +87,9 @@ int main() {
   DOPH<uint32_t, uint32_t> hf(K, L, RP);
 
   LOG << "Reading data" << std::endl;
-  SvmDataset<uint32_t> data = SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, N, 5000, Q);
+  SvmDataset<uint32_t> data = SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, N, 4000, Q);
   SvmDataset<uint32_t> queries =
-      SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, Q, 5000, 0);
+      SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, Q, 4000, 0);
 
   LOG << "Inserting data" << std::endl;
   auto hashes = hf.Hash(data);
@@ -93,9 +97,12 @@ int main() {
 
   LOG << "Querying" << std::endl;
   auto qHashes = hf.Hash(queries);
-  auto results = ht.Query(queries.len, qHashes, 4);
+  auto results = ht.Query(queries.len, qHashes, topk);
+
 
   LOG << "Evaluating" << std::endl;
+  Eval<uint32_t>(data, queries, results, 1);
+  Eval<uint32_t>(data, queries, results, 2);
   Eval<uint32_t>(data, queries, results, 4);
 
   return 0;

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "DistributedLog.h"
+
 template <typename Label_t>
 class SvmDataset {
  private:
@@ -18,7 +20,7 @@ class SvmDataset {
     uint64_t totalLines = 0;
     uint64_t totalDim = 0;
 
-    while (std::getline(file, line)) {
+    while (totalRead < n && std::getline(file, line)) {
       if (totalLines++ < offset) {
         continue;
       }
@@ -37,9 +39,6 @@ class SvmDataset {
         result.values[totalDim] = value;
         totalDim++;
       }
-      if (totalRead >= n) {
-        break;
-      }
     }
 
     if (totalRead < n) {
@@ -48,8 +47,7 @@ class SvmDataset {
       exit(1);
     }
 
-    std::cout << "Read " << totalRead << " vectors with a total dimension " << totalDim
-              << std::endl;
+    LOG << "Read " << totalRead << " vectors with a total dimension " << totalDim << std::endl;
     result.markers[totalRead] = totalDim;
   }
 

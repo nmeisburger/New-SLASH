@@ -14,11 +14,15 @@ DOPH<Label_t, Hash_t>::DOPH(uint64_t _K, uint64_t _L, uint64_t _rangePow)
   logNumHashes = std::floor(log2(numHashes));
 
   randSeeds = new uint32_t[numHashes];
+
+  srand(10);
   for (uint64_t i = 0; i < numHashes; i++) {
     randSeeds[i] = ODD(rand());
   }
 
+  srand(11);
   seed = ODD(rand());
+  srand(12);
   dhSeed = ODD(rand());
 }
 
@@ -29,6 +33,7 @@ Hash_t* DOPH<Label_t, Hash_t>::Hash(const SvmDataset<Label_t>& dataset) {
   for (uint64_t n = 0; n < dataset.len; n++) {
     uint32_t start = dataset.markers[n];
     Hash_t* allHashes = ComputeMinHashes(dataset.indices + start, dataset.markers[n + 1] - start);
+
     for (uint64_t tb = 0; tb < L; tb++) {
       Hash_t index = 0;
       for (uint64_t k = 0; k < K; k++) {
@@ -38,7 +43,7 @@ Hash_t* DOPH<Label_t, Hash_t>::Hash(const SvmDataset<Label_t>& dataset) {
         h ^= randSeeds[K * tb + k];
         index += h * allHashes[K * tb + k];
       }
-      finalHashes[HashIdx(n, tb)] = index << 2;
+      finalHashes[HashIdx(n, tb)] = (index << 2) >> (32 - rangePow);
     }
     delete[] allHashes;
   }
@@ -85,7 +90,7 @@ Hash_t* DOPH<Label_t, Hash_t>::ComputeMinHashes(uint32_t* nonzeros, uint32_t len
       uint32_t index = RandDoubleHash(bin, cnt);
       next = hashes[index];
       if (cnt > 100) {
-        next = seed;
+        next = (Hash_t)-1;
         break;
       }
     }

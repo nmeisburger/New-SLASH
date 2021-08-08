@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <random>
+#include <sstream>
+#include <vector>
 
 #include "src/Config.h"
 #include "src/DataLoader.h"
@@ -74,6 +76,30 @@ void Eval(SvmDataset<Label_t>& data, SvmDataset<Label_t>& queries, QueryResult<L
   LOG << "Average Cosine Similarity @" << K << " = " << totalSim / cnt << std::endl;
 }
 
+std::vector<std::vector<uint32_t>> ReadGroundTruths(std::string filename, uint64_t Q,
+                                                    uint64_t topk) {
+  std::ifstream file(filename);
+  std::string line;
+  std::getline(file, line);
+  file.close();
+  std::stringstream stream(line);
+
+  std::vector<std::vector<uint32_t>> data;
+  std::string item;
+
+  for (uint32_t q = 0; q < Q; q++) {
+    std::vector<uint32_t> row;
+    for (uint32_t k = 0; k < topk; k++) {
+      stream >> item;
+      row.push_back(atol(item.c_str()));
+    }
+    data.push_back(std::move(row));
+  }
+
+  LOG << "Gtruth length: " << data.size() << " x " << data.at(0).size() << std::endl;
+  return data;
+}
+
 int main(int argc, char** argv) {
   if (argc != 2) {
     std::cerr << "Invalid arguments, usage '$ ./slash <config file name>'" << std::endl;
@@ -104,6 +130,12 @@ int main(int argc, char** argv) {
 
   auto results = slash.QuerySVM(query_file, Q, avg_dim, topk);
 
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (rank != 0) {
+    return 0;
+  }
+
   LOG << "Reading data for evaluation" << std::endl;
   SvmDataset<uint32_t> data =
       SvmDataset<uint32_t>::ReadSvmDataset(data_file, (uint32_t)0, N, avg_dim, Q);
@@ -112,8 +144,29 @@ int main(int argc, char** argv) {
 
   LOG << "Evaluating" << std::endl;
 
-  for (uint32_t i = 0; i < config.Len("evaluate"); i++) {
-    Eval<uint32_t>(data, queries, results, config.IntVal("evaluate", i));
+  for (uint32_t i = 0; i < config.Len("sim_k"); i++) {
+    Eval<uint32_t>(data, queries, results, config.IntVal("sim_k", i));
+  }
+
+  auto gtruths = ReadGroundTruths(config.StrVal("gtruths"), Q, config.IntVal("gtruth_topk"));
+
+  for (uint32_t i = 0; i < config.Len("recall_k"); i++) {
+    uint32_t eval_k = config.IntVal("recall_k", i);
+
+    double recall = 0.0;
+    for (uint32_t q = 0; q < Q; q++) {
+      uint32_t correct = 0;
+      uint32_t end = std::min<uint32_t>(eval_k, results.len(q));
+      for (uint32_t i = 0; i < end; i++) {
+        for (uint32_t j = 0; j < end; j++) {
+          if (results[q][i] == gtruths.at(q).at(j)) {
+            correct++;
+          }
+        }
+      }
+      recall += ((double)correct) / end;
+    }
+    LOG << "Recall @ " << eval_k << " is : " << (recall / Q) << std::endl;
   }
 
   return 0;

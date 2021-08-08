@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 
+#include "src/Config.h"
 #include "src/DOPH.h"
 #include "src/DataLoader.h"
 #include "src/DistributedLog.h"
@@ -10,9 +11,9 @@
 
 class InitHelper {
  public:
-  InitHelper() {
+  InitHelper(std::string logPrefix) {
     MPI_Init(0, 0);
-    Logging::InitLogging("slash");
+    Logging::InitLogging(logPrefix);
     LOG << "Initializing SLASH" << std::endl;
   }
   ~InitHelper() {
@@ -73,23 +74,38 @@ void Eval(SvmDataset<Label_t>& data, SvmDataset<Label_t>& queries, QueryResult<L
   LOG << "Average Cosine Similarity @" << K << " = " << totalSim / cnt << std::endl;
 }
 
-int main() {
-  InitHelper _i_;
+int main(int argc, char** argv) {
+  if (argc != 2) {
+    std::cerr << "Invalid arguments, usage '$ ./slash <config file name>'" << std::endl;
+    return 1;
+  }
 
-  uint64_t K = 4, L = 32, RP = 9, R = 128;
+  ConfigReader config(argv[1]);
 
-  uint64_t N = 10000, Q = 1000, topk = 20;
+  InitHelper _i_(config.StrVal("logfile"));
 
-  std::string file = "/Users/nmeisburger/files/Research/data/webspam_wc_normalized_trigram.svm";
+  uint64_t K = config.IntVal("K");
+  uint64_t L = config.IntVal("L");
+  uint64_t RP = config.IntVal("range_pow");
+  uint64_t R = config.IntVal("reservoir_size");
+
+  uint64_t N = config.IntVal("data_len");
+  uint64_t Q = config.IntVal("query_len");
+  uint64_t topk = config.IntVal("topk");
+  uint64_t avg_dim = config.IntVal("avg_dim");
+
+  std::string data_file = config.StrVal("data_file");
+  std::string query_file = config.StrVal("query_file");
 
   LOG << "Creating hash table and hash function" << std::endl;
   HashTable<uint32_t, uint32_t> ht(L, R, RP);
   DOPH<uint32_t, uint32_t> hf(K, L, RP);
 
   LOG << "Reading data" << std::endl;
-  SvmDataset<uint32_t> data = SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, N, 4000, Q);
+  SvmDataset<uint32_t> data =
+      SvmDataset<uint32_t>::ReadSvmDataset(data_file, (uint32_t)0, N, avg_dim, Q);
   SvmDataset<uint32_t> queries =
-      SvmDataset<uint32_t>::ReadSvmDataset(file, (uint32_t)0, Q, 4000, 0);
+      SvmDataset<uint32_t>::ReadSvmDataset(query_file, (uint32_t)0, Q, avg_dim, 0);
 
   LOG << "Inserting data" << std::endl;
   auto hashes = hf.Hash(data);
@@ -99,11 +115,11 @@ int main() {
   auto qHashes = hf.Hash(queries);
   auto results = ht.Query(queries.len, qHashes, topk);
 
-
   LOG << "Evaluating" << std::endl;
-  Eval<uint32_t>(data, queries, results, 1);
-  Eval<uint32_t>(data, queries, results, 2);
-  Eval<uint32_t>(data, queries, results, 4);
+
+  for (uint32_t i = 0; i < config.Len("evaluate"); i++) {
+    Eval<uint32_t>(data, queries, results, config.IntVal("evaluate", i));
+  }
 
   return 0;
 }

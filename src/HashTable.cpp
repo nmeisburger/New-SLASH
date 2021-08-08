@@ -32,6 +32,7 @@ HashTable<Label_t, Hash_t>::HashTable(uint64_t _numTables, uint64_t _reservoirSi
 
 template <typename Label_t, typename Hash_t>
 void HashTable<Label_t, Hash_t>::Insert(uint64_t n, Label_t* labels, Hash_t* hashes) {
+#pragma omp parallel for default(none) shared(n, labels, hashes)
   for (uint64_t i = 0; i < n; i++) {
     for (uint64_t table = 0; table < numTables; table++) {
       Hash_t rowIndex = HashMod(hashes[HashIdx(i, table)]);
@@ -51,6 +52,7 @@ void HashTable<Label_t, Hash_t>::Insert(uint64_t n, Label_t* labels, Hash_t* has
 
 template <typename Label_t, typename Hash_t>
 void HashTable<Label_t, Hash_t>::Insert(uint64_t n, Label_t start, Hash_t* hashes) {
+#pragma omp parallel for default(none) shared(n, start, hashes)
   for (uint64_t i = 0; i < n; i++) {
     for (uint64_t table = 0; table < numTables; table++) {
       Hash_t rowIndex = HashMod(hashes[HashIdx(i, table)]);
@@ -71,6 +73,7 @@ void HashTable<Label_t, Hash_t>::Insert(uint64_t n, Label_t start, Hash_t* hashe
 template <typename Label_t, typename Hash_t>
 QueryResult<Label_t> HashTable<Label_t, Hash_t>::Query(uint64_t n, Hash_t* hashes, uint64_t k) {
   QueryResult<Label_t> result(n, k);
+#pragma omp parallel for default(none) shared(n, hashes, k, result)
   for (uint64_t query = 0; query < n; query++) {
     std::unordered_map<Label_t, uint32_t> contents(reservoirSize * numTables);
     for (uint64_t table = 0; table < numTables; table++) {

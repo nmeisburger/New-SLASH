@@ -30,6 +30,7 @@ template <typename Label_t, typename Hash_t>
 Hash_t* DOPH<Label_t, Hash_t>::Hash(const SvmDataset<Label_t>& dataset) {
   Hash_t* finalHashes = new Hash_t[dataset.len * L];
 
+#pragma omp parallel for default(none) shared(dataset, finalHashes)
   for (uint64_t n = 0; n < dataset.len; n++) {
     uint32_t start = dataset.markers[n];
     Hash_t* allHashes = ComputeMinHashes(dataset.indices + start, dataset.markers[n + 1] - start);

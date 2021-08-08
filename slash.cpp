@@ -107,9 +107,10 @@ int main(int argc, char** argv) {
   }
 
   ConfigReader config(argv[1]);
-  config.PrintConfigVals();
 
   InitHelper _i_(config.StrVal("logfile"));
+
+  config.PrintConfigVals();
 
   uint64_t K = config.IntVal("K");
   uint64_t L = config.IntVal("L");

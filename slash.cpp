@@ -93,6 +93,7 @@ int main(int argc, char** argv) {
   uint64_t Q = config.IntVal("query_len");
   uint64_t topk = config.IntVal("topk");
   uint64_t avg_dim = config.IntVal("avg_dim");
+  uint64_t batch_size = config.IntVal("batch_size");
 
   std::string data_file = config.StrVal("data_file");
   std::string query_file = config.StrVal("query_file");
@@ -108,11 +109,16 @@ int main(int argc, char** argv) {
       SvmDataset<uint32_t>::ReadSvmDataset(query_file, (uint32_t)0, Q, avg_dim, 0);
 
   LOG << "Inserting data" << std::endl;
-  auto hashes = hf.Hash(data);
-  ht.Insert(data.len, data.start, hashes);
+  uint64_t num_batches = (N + batch_size - 1) / batch_size;
+  for (uint64_t batch = 0; batch < num_batches; batch++) {
+    uint64_t start = batch * batch_size;
+    uint64_t cnt = std::min(N, (batch + 1) * batch_size) - start;
+    auto hashes = hf.Hash(data, start, cnt);
+    ht.Insert(cnt, data.start + start, hashes);
+  }
 
   LOG << "Querying" << std::endl;
-  auto qHashes = hf.Hash(queries);
+  auto qHashes = hf.Hash(queries, 0, Q);
   auto results = ht.Query(queries.len, qHashes, topk);
 
   LOG << "Evaluating" << std::endl;

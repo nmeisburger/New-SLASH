@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -13,6 +14,7 @@ class SvmDataset {
 
   static void ReadSvmDatasetHelper(const std::string& filename, SvmDataset& result, uint64_t n,
                                    uint64_t offset = 0) {
+    auto start = std::chrono::high_resolution_clock::now();
     std::ifstream file(filename);
     std::string line;
 
@@ -46,9 +48,13 @@ class SvmDataset {
                 << std::endl;
       exit(1);
     }
-
-    LOG << "Read " << totalRead << " vectors with a total dimension " << totalDim << std::endl;
     result.markers[totalRead] = totalDim;
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    LOG << "Read " << totalRead << " vectors with a total dimension " << totalDim < < < <
+        " in " << std::chrono::duraction_cast<std::chrono::seconds>(end - start).count()
+               << " seconds" << std::endl;
   }
 
  public:

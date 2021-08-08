@@ -27,11 +27,12 @@ DOPH<Label_t, Hash_t>::DOPH(uint64_t _K, uint64_t _L, uint64_t _rangePow)
 }
 
 template <typename Label_t, typename Hash_t>
-Hash_t* DOPH<Label_t, Hash_t>::Hash(const SvmDataset<Label_t>& dataset) {
-  Hash_t* finalHashes = new Hash_t[dataset.len * L];
+Hash_t* DOPH<Label_t, Hash_t>::Hash(const SvmDataset<Label_t>& dataset, uint64_t offset,
+                                    uint64_t num) {
+  Hash_t* finalHashes = new Hash_t[num * L];
 
-#pragma omp parallel for default(none) shared(dataset, finalHashes)
-  for (uint64_t n = 0; n < dataset.len; n++) {
+#pragma omp parallel for default(none) shared(dataset, offset, num, finalHashes)
+  for (uint64_t n = offset; n < offset + num; n++) {
     uint32_t start = dataset.markers[n];
     Hash_t* allHashes = ComputeMinHashes(dataset.indices + start, dataset.markers[n + 1] - start);
 
@@ -44,7 +45,7 @@ Hash_t* DOPH<Label_t, Hash_t>::Hash(const SvmDataset<Label_t>& dataset) {
         h ^= randSeeds[K * tb + k];
         index += h * allHashes[K * tb + k];
       }
-      finalHashes[HashIdx(n, tb)] = (index << 2) >> (32 - rangePow);
+      finalHashes[HashIdx(n - offset, tb)] = (index << 2) >> (32 - rangePow);
     }
     delete[] allHashes;
   }

@@ -21,7 +21,7 @@ class DOPH {
  public:
   DOPH(uint64_t _K, uint64_t _L, uint64_t _rangePow);
 
-  Hash_t* Hash(const SvmDataset<Label_t>& dataset);
+  Hash_t* Hash(const SvmDataset<Label_t>& dataset, uint64_t offset, uint64_t num);
 
   ~DOPH();
 };

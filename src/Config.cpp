@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+#include "DistributedLog.h"
+
 std::vector<std::string> Split(const std::string& line, char delimeter) {
   std::vector<std::string> output;
   std::string curr = line;
@@ -117,14 +119,26 @@ uint32_t ConfigReader::Len(std::string key) const {
   return config_vars.at(key)->Len();
 }
 
-void ConfigReader::PrintConfigVals() {
-  std::cout << "\033[1;34m====== Config Vars ======\033[0m" << std::endl;
-  for (const auto& var : config_vars) {
-    std::cout << "\033[1;34m" << var.first << "\033[0m => " << var.second << std::endl;
-  }
-  std::cout << "\033[1;34m=========================\033[0m" << std::endl;
+void ConfigReader::PrintConfigVals() { LOG << this << std::endl; }
 
-  std::cout << std::endl;
+std::ostream& operator<<(std::ostream& out, const ConfigReader& config) {
+  out << "\033[1;34m====== Config Vars ======\033[0m\n";
+  for (const auto& var : config.config_vars) {
+    out << "\033[1;34m" << var.first << "\033[0m => " << var.second << "\n";
+  }
+  out << "\033[1;34m=========================\033[0m\n";
+
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const ConfigReader* config) {
+  out << "\033[1;34m====== Config Vars ======\033[0m\n";
+  for (const auto& var : config->config_vars) {
+    out << "\033[1;34m" << var.first << "\033[0m => " << var.second << "\n";
+  }
+  out << "\033[1;34m=========================\033[0m\n";
+
+  return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const ConfigValue& val) { return val.Print(out); }

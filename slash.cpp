@@ -107,6 +107,7 @@ int main(int argc, char** argv) {
   }
 
   ConfigReader config(argv[1]);
+  config.PrintConfigVals();
 
   InitHelper _i_(config.StrVal("logfile"));
 

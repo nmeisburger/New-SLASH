@@ -122,6 +122,10 @@ class ConfigReader {
 
   const std::string& StrVal(std::string key, uint32_t index = 0) const;
 
+  friend std::ostream& operator<<(std::ostream&, const ConfigReader& config);
+
+  friend std::ostream& operator<<(std::ostream&, const ConfigReader* config);
+
  private:
   void ParseConfig(std::string filename);
 

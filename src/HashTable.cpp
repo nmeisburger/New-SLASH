@@ -105,6 +105,41 @@ QueryResult<Label_t> HashTable<Label_t, Hash_t>::Query(uint64_t n, Hash_t* hashe
 }
 
 template <typename Label_t, typename Hash_t>
+QueryResult<std::pair<Label_t, uint32_t>> HashTable<Label_t, Hash_t>::QueryWithCounts(
+    uint64_t n, Hash_t* hashes, uint64_t k) {
+  QueryResult<std::pair<Label_t, uint32_t>> result(n, k);
+#pragma omp parallel for default(none) shared(n, hashes, k, result)
+  for (uint64_t query = 0; query < n; query++) {
+    std::unordered_map<Label_t, uint32_t> contents(reservoirSize * numTables);
+    for (uint64_t table = 0; table < numTables; table++) {
+      Hash_t rowIndex = HashMod(hashes[HashIdx(query, table)]);
+      uint32_t counter = counters[CounterIdx(table, rowIndex)];
+
+      for (uint64_t i = 0; i < std::min<uint64_t>(counter, reservoirSize); i++) {
+        contents[data[DataIdx(table, rowIndex, i)]]++;
+      }
+    }
+
+    std::pair<Label_t, uint32_t>* pairs = new std::pair<Label_t, uint32_t>[contents.size()]();
+    uint64_t cnt = 0;
+    for (const auto& x : contents) {
+      pairs[cnt++] = x;  // std::move(x)?
+    }
+
+    std::sort(pairs, pairs + cnt, [](const auto& a, const auto& b) { return a.second > b.second; });
+
+    uint64_t len = std::min(k, cnt);
+    result.len(query) = len;
+    for (uint64_t i = 0; i < len; i++) {
+      result[query][i] = pairs[i];
+    }
+    delete[] pairs;
+  }
+
+  return result;
+}
+
+template <typename Label_t, typename Hash_t>
 void HashTable<Label_t, Hash_t>::Dump() {
   for (uint64_t table = 0; table < numTables; table++) {
     std::cout << "Table: " << table << std::endl;

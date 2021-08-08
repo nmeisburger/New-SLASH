@@ -10,6 +10,9 @@ class Slash {
   void InsertSVM(std::string datafile, uint64_t N, uint64_t offset, uint64_t avg_dim,
                  uint64_t batch_size);
 
+  QueryResult<uint32_t> QuerySVMSingleMachine(std::string queryfile, uint64_t Q, uint64_t avg_dim,
+                                              uint64_t topk);
+
   QueryResult<uint32_t> QuerySVM(std::string queryfile, uint64_t Q, uint64_t avg_dim,
                                  uint64_t topk);
 
@@ -19,6 +22,7 @@ class Slash {
   }
 
  private:
+  int rank, world_size;
   DOPH<uint32_t, uint32_t>* hasher;
   HashTable<uint32_t, uint32_t>* hash_tables;
 };

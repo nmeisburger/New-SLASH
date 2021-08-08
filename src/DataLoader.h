@@ -52,9 +52,9 @@ class SvmDataset {
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    LOG << "Read " << totalRead << " vectors with a total dimension " << totalDim < < < <
-        " in " << std::chrono::duraction_cast<std::chrono::seconds>(end - start).count()
-               << " seconds" << std::endl;
+    LOG << "Read " << totalRead << " vectors with a total dimension " << totalDim << " in "
+        << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds"
+        << std::endl;
   }
 
  public:

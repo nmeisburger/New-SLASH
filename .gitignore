@@ -5,3 +5,5 @@ slash
 *.log
 
 *.dSYM
+
+.vscode

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <utility>
 
 constexpr uint64_t DefaultMaxRand = 10000;
 
@@ -64,6 +65,8 @@ class HashTable {
   void Insert(uint64_t n, Label_t start, Hash_t* hashes);
 
   QueryResult<Label_t> Query(uint64_t n, Hash_t* hashes, uint64_t k);
+
+  QueryResult<std::pair<Label_t, uint32_t>> QueryWithCounts(uint64_t n, Hash_t* hashes, uint64_t k);
 
   void Dump();
 

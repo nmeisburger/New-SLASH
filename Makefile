@@ -1,4 +1,5 @@
-CXX	:= g++
+# CXX	:= g++
+CXX := mpicxx
 
 SRC_DIR   :=  ./src
 BUILD_DIR := 	./build
@@ -9,8 +10,8 @@ OBJS := $(SRCS:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
 TARGET := slash.cpp
 BINARY := $(TARGET:.cpp=)
 
-INC_FLAGS := -I/usr/local/include
-LIB_FLAGS := -L/usr/local/lib
+# INC_FLAGS := -I/usr/local/include
+# LIB_FLAGS := -L/usr/local/lib
 
 # -Ofast all optimizations of O3 plus bonus items
 # -DNDEBUG disables assertions
@@ -25,7 +26,8 @@ CXX_OPT_FLAGS := -std=c++14 -Ofast -DNDEBUG -fopenmp -march=native -fPIC \
 
 CXX_DBG_FLAGS := -g -Wall -Wextra -Werror
 
-CXX_FLAGS := $(INC_FLAGS) $(LIB_FLAGS) $(CXX_OPT_FLAGS) $(CXX_DBG_FLAGS) -lmpi
+CXX_FLAGS := $(INC_FLAGS) $(LIB_FLAGS) $(CXX_OPT_FLAGS) $(CXX_DBG_FLAGS) 
+# add to above CXX_FLAGS if not using mpicxx -lmpi
 
 $(BINARY) : $(BUILD_DIR) $(OBJS)
 	$(CXX) $(CXX_FLAGS) $(TARGET) $(OBJS) -o $@ 

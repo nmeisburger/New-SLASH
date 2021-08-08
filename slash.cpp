@@ -1,13 +1,13 @@
+#include "src/Slash.h"
+
 #include <mpi.h>
 
 #include <iostream>
 #include <random>
 
 #include "src/Config.h"
-#include "src/DOPH.h"
 #include "src/DataLoader.h"
 #include "src/DistributedLog.h"
-#include "src/HashTable.h"
 
 class InitHelper {
  public:
@@ -86,8 +86,10 @@ int main(int argc, char** argv) {
 
   uint64_t K = config.IntVal("K");
   uint64_t L = config.IntVal("L");
-  uint64_t RP = config.IntVal("range_pow");
-  uint64_t R = config.IntVal("reservoir_size");
+  uint64_t range_pow = config.IntVal("range_pow");
+  uint64_t reservoir_size = config.IntVal("reservoir_size");
+
+  Slash slash(K, L, range_pow, reservoir_size);
 
   uint64_t N = config.IntVal("data_len");
   uint64_t Q = config.IntVal("query_len");
@@ -98,28 +100,15 @@ int main(int argc, char** argv) {
   std::string data_file = config.StrVal("data_file");
   std::string query_file = config.StrVal("query_file");
 
-  LOG << "Creating hash table and hash function" << std::endl;
-  HashTable<uint32_t, uint32_t> ht(L, R, RP);
-  DOPH<uint32_t, uint32_t> hf(K, L, RP);
+  slash.InsertSVM(data_file, N, Q, avg_dim, batch_size);
 
-  LOG << "Reading data" << std::endl;
+  auto results = slash.QuerySVM(query_file, Q, avg_dim, topk);
+
+  LOG << "Reading data for evaluation" << std::endl;
   SvmDataset<uint32_t> data =
       SvmDataset<uint32_t>::ReadSvmDataset(data_file, (uint32_t)0, N, avg_dim, Q);
   SvmDataset<uint32_t> queries =
       SvmDataset<uint32_t>::ReadSvmDataset(query_file, (uint32_t)0, Q, avg_dim, 0);
-
-  LOG << "Inserting data" << std::endl;
-  uint64_t num_batches = (N + batch_size - 1) / batch_size;
-  for (uint64_t batch = 0; batch < num_batches; batch++) {
-    uint64_t start = batch * batch_size;
-    uint64_t cnt = std::min(N, (batch + 1) * batch_size) - start;
-    auto hashes = hf.Hash(data, start, cnt);
-    ht.Insert(cnt, data.start + start, hashes);
-  }
-
-  LOG << "Querying" << std::endl;
-  auto qHashes = hf.Hash(queries, 0, Q);
-  auto results = ht.Query(queries.len, qHashes, topk);
 
   LOG << "Evaluating" << std::endl;
 

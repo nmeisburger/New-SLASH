@@ -122,21 +122,21 @@ uint32_t ConfigReader::Len(std::string key) const {
 void ConfigReader::PrintConfigVals() { LOG << this << std::endl; }
 
 std::ostream& operator<<(std::ostream& out, const ConfigReader& config) {
-  out << "\033[1;34m====== Config Vars ======\033[0m\n";
+  out << "====== Config Vars ======\n";
   for (const auto& var : config.config_vars) {
-    out << "\033[1;34m" << var.first << "\033[0m => " << var.second << "\n";
+    out << var.first << " => " << var.second << "\n";
   }
-  out << "\033[1;34m=========================\033[0m\n";
+  out << "=========================\n";
 
   return out;
 }
 
 std::ostream& operator<<(std::ostream& out, const ConfigReader* config) {
-  out << "\033[1;34m====== Config Vars ======\033[0m\n";
+  out << "====== Config Vars ======\n";
   for (const auto& var : config->config_vars) {
-    out << "\033[1;34m" << var.first << "\033[0m => " << var.second << "\n";
+    out << var.first << " => " << var.second << "\n";
   }
-  out << "\033[1;34m=========================\033[0m\n";
+  out << "=========================\n";
 
   return out;
 }

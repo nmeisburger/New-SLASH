@@ -154,13 +154,17 @@ int main(int argc, char** argv) {
 
   for (uint32_t i = 0; i < config.Len("recall_k"); i++) {
     uint32_t eval_k = config.IntVal("recall_k", i);
+    if (eval_k > topk) {
+      LOG << "Cannot compute recall @ " << eval_k << " since topk = " << topk << std::endl;
+      continue;
+    }
 
     double recall = 0.0;
     for (uint32_t q = 0; q < Q; q++) {
       uint32_t correct = 0;
       uint32_t end = std::min<uint32_t>(eval_k, results.len(q));
       for (uint32_t i = 0; i < end; i++) {
-        for (uint32_t j = 0; j < end; j++) {
+        for (uint32_t j = 0; j < 100; j++) {
           if (results[q][i] == gtruths.at(q).at(j)) {
             correct++;
           }

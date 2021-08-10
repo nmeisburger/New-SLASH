@@ -98,7 +98,7 @@ QueryResult<uint32_t> Slash::QuerySVM(std::string queryfile, uint64_t Q, uint64_
   }
 
   uint32_t num_iter = std::ceil(std::log(world_size) / std::log(2));
-  unsigned int* recv_buf = new unsigned int[Q * topk * 2];
+  uint32_t* recv_buf = new uint32_t[Q * topk * 2];
   MPI_Status status;
   for (uint32_t iter = 0; iter < num_iter; iter++) {
     if (rank % ((int)std::pow(2, iter + 1)) == 0 && (rank + std::pow(2, iter)) < world_size) {
